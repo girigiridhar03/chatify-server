@@ -54,11 +54,16 @@ export const accessChat = async (req, res) => {
 export const fetchChats = async (req, res) => {
   try {
     const loggedInUserid = req.user?._id;
+    const { username } = req.query;
 
     const chats = await Chat.find({
       users: loggedInUserid,
     })
-      .populate("users", "-password")
+      .populate({
+        path: "users",
+        match: { username: { $regex: username || "", $options: "i" } },
+        select: "-password",
+      })
       .populate({
         path: "lastMessage",
         populate: {
@@ -68,6 +73,7 @@ export const fetchChats = async (req, res) => {
       })
       .populate("groupAdmin", "-password")
       .sort({ updatedAt: -1 });
+  
 
     response(res, 200, `Fetched chats`, chats);
   } catch (error) {
