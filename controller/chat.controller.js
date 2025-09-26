@@ -56,27 +56,34 @@ export const fetchChats = async (req, res) => {
     const loggedInUserid = req.user?._id;
     const { username } = req.query;
 
-    const chats = await Chat.find({
-      users: loggedInUserid,
-    })
+    let chatsQuery = Chat.find({ users: loggedInUserid })
       .populate({
         path: "users",
-        match: { username: { $regex: username || "", $options: "i" } },
         select: "-password",
       })
       .populate({
         path: "lastMessage",
-        populate: {
-          path: "sender",
-          select: "-password",
-        },
+        populate: { path: "sender", select: "-password" },
       })
       .populate("groupAdmin", "-password")
       .sort({ updatedAt: -1 });
-  
 
-    response(res, 200, `Fetched chats`, chats);
+    let chats = await chatsQuery;
+
+    if (username) {
+      const regex = new RegExp(username, "i");
+      chats = chats.filter((chat) =>
+        chat.users.some(
+          (user) =>
+            user._id.toString() !== loggedInUserid.toString() &&
+            regex.test(user.username)
+        )
+      );
+    }
+
+    response(res, 200, "Fetched chats", chats);
   } catch (error) {
+    console.error(error);
     response(res, 500, "Internal Server error");
   }
 };
