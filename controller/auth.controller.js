@@ -2,6 +2,7 @@ import {
   deleteImageFromCloudinary,
   uploadToCloudinary,
 } from "../config/cloudinary.config.js";
+import Chat from "../model/chat.model.js";
 import User from "../model/user.model.js";
 import { response } from "../utils/Response.utils.js";
 import jwt from "jsonwebtoken";
@@ -134,11 +135,25 @@ export const signout = async (req, res) => {
 
 export const searchUsers = async (req, res) => {
   try {
+    if (!req.query.search?.trim()) {
+      return response(res, 200, "No users", []);
+    }
+
+    const chats = await Chat.find({
+      users: req.user?._id,
+      chatName: { $eq: "sender" },
+    }).select("users");
+    const usersInChat = chats.flatMap((chat) =>
+      chat.users
+        .filter((u) => u.toString() !== req.user?._id?.toString())
+        .map((u) => u.toString())
+    );
+
     const keyword = req.query.search
       ? {
-          _id: { $ne: req.user?._id },
+          _id: { $ne: req.user?._id, $nin: usersInChat },
           $or: [
-            { name: { $regex: req.query.search, $options: "i" } },
+            { username: { $regex: req.query.search, $options: "i" } },
             { email: { $regex: req.query.search, $options: "i" } },
           ],
         }
@@ -182,6 +197,32 @@ export const updateProfile = async (req, res) => {
     response(res, 200, "User details updated", user);
   } catch (error) {
     console.log(error);
+    response(res, 500, "Internal Server error");
+  }
+};
+
+export const groupSearch = async (req, res) => {
+  try {
+    const value = req.query.search;
+
+    if (!value?.trim()) {
+      return response(res, 200, "No users", []);
+    }
+
+    const keyword = value
+      ? {
+          _id: { $ne: req.user._id },
+          $or: [
+            { username: { $regex: value, $options: "i" } },
+            { email: { $regex: value, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const users = await User.find(keyword).select("-password");
+
+    response(res, 200, "fetched", users);
+  } catch (error) {
     response(res, 500, "Internal Server error");
   }
 };

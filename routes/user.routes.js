@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getUserDetails,
+  groupSearch,
   searchUsers,
   signin,
   signout,
@@ -23,4 +24,5 @@ userRouter.patch(
   authMiddleware,
   updateProfile
 );
+userRouter.get("/auth/groupSearch", authMiddleware, groupSearch);
 export default userRouter;

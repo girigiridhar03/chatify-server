@@ -4,7 +4,7 @@ import { response } from "../utils/Response.utils.js";
 import mongoose from "mongoose";
 export const accessChat = async (req, res) => {
   try {
-    const { userid } = req.body;
+    const { userid } = req.params;
 
     if (!userid) {
       response(res, 400, "Id is required");
@@ -126,7 +126,7 @@ export const createGroupChats = async (req, res) => {
         },
       });
 
-    response(res, 200, "create group chat", fullGroupChat);
+    response(res, 200, "created group chat", fullGroupChat);
   } catch (error) {
     response(res, 500, "Internal Server error");
   }

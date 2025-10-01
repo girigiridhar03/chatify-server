@@ -8,9 +8,10 @@ import {
   fetchChats,
   renameGroup,
 } from "../controller/chat.controller.js";
+import { groupSearch } from "../controller/auth.controller.js";
 const chatRoutes = express.Router();
 
-chatRoutes.post("/chat/access", authMiddleware, accessChat);
+chatRoutes.post("/chat/access/:userid", authMiddleware, accessChat);
 chatRoutes.get("/chat/fetchchats", authMiddleware, fetchChats);
 chatRoutes.post("/chat/createGroup", authMiddleware, createGroupChats);
 chatRoutes.post("/chat/rename", authMiddleware, renameGroup);
