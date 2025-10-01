@@ -55,7 +55,12 @@ export const fetchChats = async (req, res) => {
   try {
     const loggedInUserid = req.user?._id;
     const { username } = req.query;
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
 
+    const totalChats = await Chat.countDocuments({ users: loggedInUserid });
+    const totalPages = Math.ceil(totalChats / limit);
     let chatsQuery = Chat.find({ users: loggedInUserid })
       .populate({
         path: "users",
@@ -68,7 +73,7 @@ export const fetchChats = async (req, res) => {
       .populate("groupAdmin", "-password")
       .sort({ updatedAt: -1 });
 
-    let chats = await chatsQuery;
+    let chats = await chatsQuery.skip(skip).limit(limit);
 
     if (username) {
       const regex = new RegExp(username, "i");
@@ -81,7 +86,7 @@ export const fetchChats = async (req, res) => {
       );
     }
 
-    response(res, 200, "Fetched chats", chats);
+    response(res, 200, "Fetched chats", { chats, totalPages });
   } catch (error) {
     console.error(error);
     response(res, 500, "Internal Server error");
