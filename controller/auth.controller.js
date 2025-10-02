@@ -204,6 +204,9 @@ export const updateProfile = async (req, res) => {
 export const groupSearch = async (req, res) => {
   try {
     const value = req.query.search;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     if (!value?.trim()) {
       return response(res, 200, "No users", []);
@@ -219,9 +222,23 @@ export const groupSearch = async (req, res) => {
         }
       : {};
 
-    const users = await User.find(keyword).select("-password");
+    const users = await User.find(keyword)
+      .select("-password")
+      .skip(skip)
+      .limit(limit);
 
     response(res, 200, "fetched", users);
+  } catch (error) {
+    response(res, 500, "Internal Server error");
+  }
+};
+
+export const getSingleUserDetails = async (req, res) => {
+  try {
+    const { userid } = req.params;
+    const user = await User.findById(userid).select("-password");
+
+    response(res, 200, "user details fetched succesfull", user);
   } catch (error) {
     response(res, 500, "Internal Server error");
   }
