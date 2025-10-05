@@ -6,6 +6,7 @@ import {
   createGroupChats,
   deleteGroupMember,
   fetchChats,
+  getSingleChatDetails,
   renameGroup,
 } from "../controller/chat.controller.js";
 import { groupSearch } from "../controller/auth.controller.js";
@@ -21,5 +22,6 @@ chatRoutes.delete(
   authMiddleware,
   deleteGroupMember
 );
+chatRoutes.get("/chat/:chatId", authMiddleware, getSingleChatDetails);
 
 export default chatRoutes;

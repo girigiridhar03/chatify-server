@@ -17,9 +17,10 @@ app.use(express.static("/public"));
 
 import userRouter from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import messageRouter from "./routes/message.routes.js";
 
 app.use("/api", userRouter);
 app.use("/api", chatRoutes);
+app.use("/api", messageRouter);
 
 export default app;
- 

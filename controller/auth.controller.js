@@ -237,7 +237,6 @@ export const getSingleUserDetails = async (req, res) => {
   try {
     const { userid } = req.params;
     const user = await User.findById(userid).select("-password");
-
     response(res, 200, "user details fetched succesfull", user);
   } catch (error) {
     response(res, 500, "Internal Server error");

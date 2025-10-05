@@ -239,3 +239,32 @@ export const deleteGroupMember = async (req, res) => {
     response(res, 500, "Internal Server error");
   }
 };
+
+export const getSingleChatDetails = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    if (!chatId) {
+      return response(res, 400, "chatId is required");
+    }
+
+    if (!mongoose.isValidObjectId(chatId)) {
+      return response(res, 400, "Invalid chatId");
+    }
+
+    const singleChat = await Chat.findById(chatId)
+      .populate({
+        path: "users",
+        select: "-password",
+      })
+      .populate({
+        path: "lastMessage",
+        populate: { path: "sender", select: "-password" },
+      })
+      .populate("groupAdmin", "-password");
+
+    response(res, 200, "Fetched SingleChat", singleChat);
+  } catch (error) {
+    response(res, 500, "Internal Server error");
+  }
+};
