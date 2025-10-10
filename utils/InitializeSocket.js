@@ -19,7 +19,6 @@ export const initializeSocket = (server) => {
     });
 
     socket.on("join_chat", (chatId) => {
-      console.log(chatId);
       socket.join(chatId);
       console.log("joined to chatid");
     });
@@ -30,6 +29,28 @@ export const initializeSocket = (server) => {
         content: data.content,
         profilePic: data.profilePic,
       });
+    });
+
+    socket.on("check_user_online", ({ selectedUser }) => {
+      const online = onlineUser.has(selectedUser);
+      socket.emit("user_online_status", { userId: selectedUser, online });
+    });
+
+    socket.on("typing", ({ chatId, userId }) => {
+      socket.to(chatId).emit("user_typing", { chatId, userId });
+    });
+
+    socket.on("stop_typing", ({ chatId, userId }) => {
+      socket.to(chatId).emit("user_stop_typing", { chatId, userId });
+    });
+
+    socket.on("disconnect", () => {
+      for (let [userId, sockId] of onlineUser.entries()) {
+        if (sockId === socket.id) {
+          onlineUser.delete(userId);
+          break;
+        }
+      }
     });
   });
 };
