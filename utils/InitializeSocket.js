@@ -1,6 +1,11 @@
 import { Server } from "socket.io";
+import Message from "../model/message.model.js";
+import Notification from "../model/notification.modal.js";
+import Chat from "../model/chat.model.js";
 
 const onlineUser = new Map();
+const socketToUser = new Map();
+const activeUsersInChat = new Map();
 
 export const initializeSocket = (server) => {
   const io = new Server(server, {
@@ -14,21 +19,65 @@ export const initializeSocket = (server) => {
     console.log("socket is connected: ", socket.id);
 
     socket.on("register_user", (user) => {
-      console.log(user);
       onlineUser.set(user._id, socket.id);
+      socketToUser.set(socket.id, user._id);
     });
 
     socket.on("join_chat", (chatId) => {
       socket.join(chatId);
-      console.log("joined to chatid");
+
+      if (!activeUsersInChat.has(chatId))
+        activeUsersInChat.set(chatId, new Set());
+
+      activeUsersInChat.get(chatId).add(socketToUser.get(socket.id));
     });
 
-    socket.on("send_message", (data) => {
+    socket.on("send_message", async (data) => {
       io.to(data.chatId).emit("receive_message", {
-        sender: { _id: data?.senderId },
-        content: data.content,
-        profilePic: data.profilePic,
+        date: data?.date,
+        chatId: data.chatId,
+        messages: [
+          {
+            sender: { _id: data?.senderId },
+            content: data.content,
+            profilePic: data.profilePic,
+            createdAt: data?.createdAt,
+          },
+        ],
       });
+
+      const newMessage = await Message.create({
+        sender: data?.senderId,
+        content: data?.content,
+        chat: data?.chatId,
+      });
+
+      data.usersInChat.forEach(async (userid) => {
+        if (userid !== data.senderId) {
+          const socketId = onlineUser.get(userid);
+          const isActive = activeUsersInChat.get(data.chatId)?.has(userid);
+          if (!isActive) {
+            await Notification.create({
+              receiver: userid,
+              sender: data?.senderId,
+              message: newMessage?._id,
+              chat: data?.chatId,
+            });
+          }
+
+          if (socketId && !isActive) {
+            io.to(socketId).emit("notification", {
+              chatId: data.chatId,
+              message: data.content,
+              senderId: data.senderId,
+            });
+          }
+        }
+      });
+
+      const chat = await Chat.findById(data?.chatId);
+      chat.lastMessage = newMessage?._id;
+      await chat.save();
     });
 
     socket.on("check_user_online", ({ selectedUser }) => {
@@ -44,12 +93,27 @@ export const initializeSocket = (server) => {
       socket.to(chatId).emit("user_stop_typing", { chatId, userId });
     });
 
+    socket.on("leave_chat", (chatId) => {
+      const userid = socketToUser.get(socket.id);
+
+      if (activeUsersInChat.has(chatId)) {
+        activeUsersInChat.get(chatId).delete(userid);
+      }
+
+      if (activeUsersInChat.get(chatId).size === 0) {
+        activeUsersInChat.delete(chatId);
+      }
+    });
+
     socket.on("disconnect", () => {
-      for (let [userId, sockId] of onlineUser.entries()) {
-        if (sockId === socket.id) {
-          onlineUser.delete(userId);
-          break;
-        }
+      const userId = socketToUser.get(socket.id);
+      activeUsersInChat.forEach((userSet, chatId) => {
+        userSet.delete(userId);
+        if (userSet.size === 0) activeUsersInChat.delete(chatId);
+      });
+      if (userId) {
+        onlineUser.delete(userId);
+        socketToUser.delete(socket.id);
       }
     });
   });

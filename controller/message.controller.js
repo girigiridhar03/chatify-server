@@ -62,20 +62,52 @@ export const allMessage = async (req, res) => {
       return response(res, 400, "Invalid chatId");
     }
 
-    const allMessage = await Message.find({ chat: chatId })
-      .populate("sender", "username profilePic")
-      .populate({
-        path: "chat",
-        populate: {
-          path: "lastMessage",
-          populate: {
-            path: "sender",
-            select: "username profilePic",
-          },
+    const allMessage = await Message.aggregate([
+      {
+        $match: {
+          chat: new mongoose.Types.ObjectId(chatId),
         },
-      });
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "sender",
+          foreignField: "_id",
+          as: "sender",
+        },
+      },
+      { $unwind: "$sender" },
+      {
+        $project: {
+          content: 1,
+          createdAt: 1,
+          "sender._id": 1,
+          "sender.username": 1,
+          "sender.profilePic": 1,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+          messages: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $sort: {
+          _id: 1,
+        },
+      },
+    ]);
 
-    response(res, 200, "all message fetched", allMessage);
+    // Format output for frontend
+    const formatted = allMessage.map((group) => ({
+      date: group._id,
+      messages: group.messages,
+    }));
+
+    response(res, 200, "all message fetched", formatted);
   } catch (error) {
     response(res, 500, "Internal server error");
   }
