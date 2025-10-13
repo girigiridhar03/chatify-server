@@ -100,7 +100,7 @@ export const initializeSocket = (server) => {
         activeUsersInChat.get(chatId).delete(userid);
       }
 
-      if (activeUsersInChat.get(chatId).size === 0) {
+      if (activeUsersInChat.get(chatId)?.size === 0) {
         activeUsersInChat.delete(chatId);
       }
     });
