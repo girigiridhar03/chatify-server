@@ -56,6 +56,7 @@ export const initializeSocket = (server) => {
         if (userid !== data.senderId) {
           const socketId = onlineUser.get(userid);
           const isActive = activeUsersInChat.get(data.chatId)?.has(userid);
+
           if (!isActive) {
             await Notification.create({
               receiver: userid,
@@ -65,11 +66,20 @@ export const initializeSocket = (server) => {
             });
           }
 
+          const unReadCount = await Notification.countDocuments({
+            receiver: userid,
+            isRead: false,
+          });
+
           if (socketId && !isActive) {
             io.to(socketId).emit("notification", {
-              chatId: data.chatId,
+              chat: data.chatId,
               message: data.content,
-              senderId: data.senderId,
+              sender: data.senderId,
+              username: data.name,
+            });
+            io.to(socketId).emit("notification_count", {
+              notificationCount: unReadCount,
             });
           }
         }
