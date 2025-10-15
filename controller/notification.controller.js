@@ -9,7 +9,8 @@ export const getAllNotifications = async (req, res) => {
         .populate("receiver", "username profilePic")
         .populate("sender", "username profilePic")
         .populate("message", "content")
-        .populate("chat", "_id chatName isGroupChat"),
+        .populate("chat", "_id chatName isGroupChat")
+        .sort({ createdAt: -1 }),
       Notification.countDocuments(query),
     ]);
 

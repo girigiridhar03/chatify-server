@@ -73,10 +73,11 @@ export const initializeSocket = (server) => {
 
           if (socketId && !isActive) {
             io.to(socketId).emit("notification", {
-              chat: data.chatId,
-              message: data.content,
-              sender: data.senderId,
-              username: data.name,
+              chat: { _id: data.chatId },
+              message: { content: data.content },
+              sender: data.details,
+              createdAt: new Date().toISOString(),
+              _id: new Date().toISOString(),
             });
             io.to(socketId).emit("notification_count", {
               notificationCount: unReadCount,
