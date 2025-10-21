@@ -95,11 +95,13 @@ export const signin = async (req, res) => {
       process.env.JWT_SECRET
     );
 
+    const isProduction = process.env.ENV === "local";
+
     res.cookie("token", authtoken, {
-      httpOnly: process.env.ENV === "local" ? true : false,
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24 * 365,
-      secure: false,
+      httpOnly: true, // always true for security
+      secure: isProduction ? false : true, // only true in production (HTTPS)
+      sameSite: isProduction ? "lax" : "lax", // adjust if needed for cross-site
+      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     });
     response(res, 200, "user sign in successfully");
   } catch (error) {
