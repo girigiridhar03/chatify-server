@@ -96,7 +96,7 @@ export const signin = async (req, res) => {
     );
 
     res.cookie("token", authtoken, {
-      httpOnly: true,
+      httpOnly: process.env.ENV === "local" ? true : false,
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24 * 365,
       secure: false,
