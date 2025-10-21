@@ -100,7 +100,7 @@ export const signin = async (req, res) => {
     res.cookie("token", authtoken, {
       httpOnly: true, // always true for security
       secure: isProduction ? false : true, // only true in production (HTTPS)
-      sameSite: isProduction ? "lax" : "lax", // adjust if needed for cross-site
+      sameSite: isProduction ? "lax" : "none", // adjust if needed for cross-site
       maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     });
     response(res, 200, "user sign in successfully");
