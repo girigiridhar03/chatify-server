@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
+import path from "path";
+import { fileURLToPath } from "url";
 const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
@@ -23,7 +24,9 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.static("public"));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "public")));
 
 import userRouter from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
