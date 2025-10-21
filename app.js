@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 const app = express();
 const allowedOrigins = [
@@ -23,7 +24,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.static("/public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 import userRouter from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
