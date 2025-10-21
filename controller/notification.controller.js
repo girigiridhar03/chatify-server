@@ -65,6 +65,7 @@ export const getAllNotifications = async (req, res) => {
             createdAt: 1,
           },
         },
+        { $sort: { createdAt: -1 } },
         {
           $group: {
             _id: {
