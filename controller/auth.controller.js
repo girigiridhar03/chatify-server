@@ -95,14 +95,15 @@ export const signin = async (req, res) => {
       process.env.JWT_SECRET
     );
 
-    const isProduction = process.env.ENV === "local";
+    const isProduction = process.env.ENV === "production";
 
     res.cookie("token", authtoken, {
-      httpOnly: true, // always true for security
-      secure: isProduction ? false : true, // only true in production (HTTPS)
-      sameSite: isProduction ? "lax" : "none", // adjust if needed for cross-site
+      httpOnly: true,
+      secure: isProduction, // true in production (Render)
+      sameSite: isProduction ? "None" : "Lax", // "None" for cross-site cookies
       maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     });
+
     response(res, 200, "user sign in successfully");
   } catch (error) {
     console.log("signin error", error);

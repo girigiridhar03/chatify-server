@@ -99,6 +99,23 @@ export const initializeSocket = (server) => {
       await chat.save();
     });
 
+    socket.on("message_seen", async ({ senderId, chatId }) => {
+      await Message.updateMany(
+        {
+          sender: senderId,
+          chat: chatId,
+          seen: false,
+        },
+        {
+          $set: {
+            seen: true,
+          },
+        }
+      );
+
+      socket.to(chatId).emit("message_seen_ack", { senderId });
+    });
+
     socket.on("check_user_online", ({ selectedUser }) => {
       const online = onlineUser.has(selectedUser);
       socket.emit("user_online_status", { userId: selectedUser, online });
